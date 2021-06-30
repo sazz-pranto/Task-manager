@@ -54,7 +54,7 @@ const userSchema = new mongoose.Schema({
 userSchema.methods.generateAuthToken = async function() {
   const user = this;  // refers to the specific user for which the token is being generated
 
-  // setting up a token for the user and signing it
+  // setting up a token for the user with its id and signing it
   const token = jwt.sign({ id: user._id.toString() }, 'secretxD'); // id should be converted to string cause its an ObjectId by default
   
   // concat the newly created token to the user's properties
@@ -64,6 +64,15 @@ userSchema.methods.generateAuthToken = async function() {
 
   return token;
 
+}
+
+// method to get profile details for a user to share publicly
+userSchema.methods.toJSON = function() {
+  const user = this;
+  const userObject = user.toObject();  // mongodb's built in method toObject(), returns an object only properties that are added by the user, not the ones that mongodb adds
+  delete userObject.password; // removing password from userObject
+  delete userObject.tokens; // removing tokens array from userObject
+  return userObject;
 }
 
 // findByCredentials is a function on the schema to check user's credentials before login, will be called in the user router

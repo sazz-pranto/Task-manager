@@ -20,14 +20,20 @@ router.post('/users', async (req, res) => {
   }
 })
 
-// read all user
-router.get('/users', auth, async (req, res) => {
-  try {
-    const users = await User.find({});
-    res.send(users);
-  } catch(error) {
-    res.status(500).send(error);
-  }
+// // read all user
+// router.get('/users', auth, async (req, res) => {
+//   try {
+//     const users = await User.find({});
+//     res.send(users);
+//   } catch(error) {
+//     res.status(500).send(error);
+//   }
+// })
+
+// read currently logged in user
+router.get('/users/me', auth, async (req, res) => {
+  res.send(req.user);  // the user that is logged in was assigned to req object in auth middleware
+
 })
 
 // read one user using id
@@ -63,7 +69,7 @@ router.patch('/users/:id', async (req, res) => {
   try {
     /* findByIdAndUpdate() bypasses mongoose and performs a direct operation on the database, so to make
     middlewares work on updates as well, different approach is taken to update data 
-    so update operation has been done in a traditional mongoose way from line 67 */
+    so update operation has been done in a traditional mongoose way */
     // const user = await User.findByIdAndUpdate(_id, req.body, { new: true, runValidators: true});
     /* in options object, new: true will return the user with the updates applied
     new: false is set by default and it returns the user before update took place
@@ -109,6 +115,31 @@ router.post('/users/login', async (req, res) => {
     res.send({ user, token });
   } catch(error) {
     res.status(400).send(error);
+  }
+})
+
+// logout a user from current device
+router.post('/users/logout', auth, async (req, res) => {
+  try {
+    req.user.tokens = req.user.tokens.filter((token) => {
+      // filtering through each token from tokens array, token is an object that has two properties, _id and token
+      return token.token !== req.token;  // returns true only when the currently logged in user's token does not match other tokens, so the user can log out only from one device where logout is requested
+    });
+    await req.user.save();
+    res.send(`Good Bye ${req.user.name}!`);
+  } catch(error) {
+    res.status(500).send('Cant logout');
+  }
+})
+
+// logout a user from all devices
+router.post('/users/logoutall', auth, async (req, res) => {
+  try {
+    req.user.tokens = []; // leaving the array empty to clear all the sessions
+    await req.user.save();
+    res.send(`Good Bye ${req.user.name} from all devices!`);
+  } catch(error) {
+    res.status(500).send('Cant logout');
   }
 })
 

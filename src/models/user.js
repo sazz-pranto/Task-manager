@@ -3,6 +3,8 @@ const validator = require('validator');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
+const Task = require('./task');
+
 // creating a Schema for users, this schema maps to the User collection and defines the shape of the documents within that collection.
 const userSchema = new mongoose.Schema({
   name: {
@@ -117,6 +119,13 @@ userSchema.pre('save', async function (next) {
 
   next(); // proceeds to the next step(saving the data to the database)
 
+})
+
+// setting a middleware that will delete a user's tasks when the user is deleted
+userSchema.pre('remove', async function(next) {
+  const user = this;
+  await Task.deleteMany({ owner: user._id });  // deleting all the tasks that this user owns
+  next();
 })
 
 // model for Users

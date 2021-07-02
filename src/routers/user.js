@@ -20,40 +20,14 @@ router.post('/users', async (req, res) => {
   }
 })
 
-// // read all user
-// router.get('/users', auth, async (req, res) => {
-//   try {
-//     const users = await User.find({});
-//     res.send(users);
-//   } catch(error) {
-//     res.status(500).send(error);
-//   }
-// })
-
 // read currently logged in user
 router.get('/users/me', auth, async (req, res) => {
   res.send(req.user);  // the user that is logged in was assigned to req object in auth middleware
 
 })
 
-// read one user using id
-// router.get('/users/:id', async (req, res) => {
-//   const _id = req.params.id;
-//   try {
-//     const user = await User.findById(_id);
-//     if(!user) {
-//       return res.status(404).send('User not found!')
-//     }
-//     res.send(user);
-//   } catch(error) {
-//     res.status(500).send(error);
-//   }
-// })
-
 // update a user by id
 router.patch('/users/me', auth, async (req, res) => {
-  const _id = req.user._id;
-
   // check if requested updates are allowed
   const requestedUpdates = Object.keys(req.body); // returns the properties of the user object entered as an update field as an array
   const allowedUpdates = ['name', 'email', 'password', 'age'];

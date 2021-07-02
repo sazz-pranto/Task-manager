@@ -50,6 +50,16 @@ const userSchema = new mongoose.Schema({
   }]
 });
 
+// adding a virtual method
+// virtual method adds a property (here tasks) that is not stored in the database, it is just a way for mongoose to figure out how these two things (User and Task) are related
+userSchema.virtual('tasks', {
+  /* Mongoose will populate documents from the model in ref (here Task) whose 
+  foreignField matches this document's localField */
+  ref: 'Task',
+  localField: '_id',  // here _id is the property in User model, so its the local field
+  foreignField: 'owner'  // here owner is the property in Task model, so its the foreign field
+})
+
 // defining a method that will only be accessible with the instance (using Schema.methods object), not the model
 userSchema.methods.generateAuthToken = async function() {
   const user = this;  // refers to the specific user for which the token is being generated

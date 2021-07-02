@@ -37,22 +37,22 @@ router.get('/users/me', auth, async (req, res) => {
 })
 
 // read one user using id
-router.get('/users/:id', async (req, res) => {
-  const _id = req.params.id;
-  try {
-    const user = await User.findById(_id);
-    if(!user) {
-      return res.status(404).send('User not found!')
-    }
-    res.send(user);
-  } catch(error) {
-    res.status(500).send(error);
-  }
-})
+// router.get('/users/:id', async (req, res) => {
+//   const _id = req.params.id;
+//   try {
+//     const user = await User.findById(_id);
+//     if(!user) {
+//       return res.status(404).send('User not found!')
+//     }
+//     res.send(user);
+//   } catch(error) {
+//     res.status(500).send(error);
+//   }
+// })
 
 // update a user by id
-router.patch('/users/:id', async (req, res) => {
-  const _id = req.params.id;
+router.patch('/users/me', auth, async (req, res) => {
+  const _id = req.user._id;
 
   // check if requested updates are allowed
   const requestedUpdates = Object.keys(req.body); // returns the properties of the user object entered as an update field as an array
@@ -75,7 +75,7 @@ router.patch('/users/:id', async (req, res) => {
     new: false is set by default and it returns the user before update took place
     runValidators: true will run validation checks like it does while creation
     */
-    const user = await User.findById(_id);
+    const user = req.user;
 
     // iterate through the updates that the user wants to make and assign the new value to user object
     requestedUpdates.forEach((requestedUpdate) => {
@@ -83,25 +83,18 @@ router.patch('/users/:id', async (req, res) => {
     });
 
     await user.save(); // save the user with updates applied
-
-    if(!user) {
-      return res.status(404).send('User not found!')
-    }
     res.send(user);
   } catch(error) {
     res.status(500).send(error);
   }
 })
 
-// delete a user by id
-router.delete('/users/:id', async (req, res) => {
-  const _id = req.params.id;
+// delete a user's own profile
+router.delete('/users/me', auth, async (req, res) => {
   try {
-    const user = await User.findByIdAndDelete(_id);
-    if(!user) {
-      return res.status(404).send('User not found!')
-    }
-    res.send(user);
+    // const user = await User.findByIdAndDelete(req.user._id);  // user object was attached to req object in auth middleware
+    await req.user.remove();  // does the same thing as findByIdAndDelete()
+    res.send(req.user);
   } catch(error) {
     res.status(500).send(error);
   }

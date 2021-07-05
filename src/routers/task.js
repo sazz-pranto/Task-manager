@@ -20,14 +20,53 @@ router.post('/tasks', auth, async (req, res) => {
 })
 
 // read all tasks
+// GET /tasks/
+// read completed or incompleted tasks
+// GET /tasks?completed=true/false
+// paginating with limitation
+// GET /tasks?limit=2&skip=2
+// sorting in ascending or descending order
+// GET /tasks?sortBy=createdAt:desc/asc
 router.get('/tasks', auth, async (req, res) => {
-  try {
-    const tasks = await Task.find({ owner: req.user._id });
-    res.send(tasks);
+  /* match keeps the query string with three possible values
+    match = { completed: true } to filter out all completed tasks
+    match = { completed: false } to filter out all incomplete tasks
+    match = {} no filter to get all the tasks  */ 
+    const match = {};
 
-    // another way of getting the user's own tasks
-    // await req.user.populate('tasks').execPopulate();
-    // res.send(req.user.tasks);
+    /* sort keeps the query string for sorting the results in ascending or descending order of creation time
+    also, keeps sorting parameter to sort completed tasks first or last */
+    const sort = {};
+    
+    // check if completed query exists in the url
+    if(req.query.completed) {
+      match.completed = req.query.completed === 'true';
+      /* in query string, true or false will come as a string not boolean so to make sure 
+        completed gets a boolean value, req.query.completed is being checked with === operator
+        so that only boolean true or false gets returned and assigned to match.completed */
+    }
+
+    // if sort query exists in the url
+    if(req.query.sortBy) {
+      const parts = req.query.sortBy.split(':'); // sorting parameters are seperated with ':' like, sortBy=createdAt:desc
+       // options object should get sorting parameters in numbers, so for descending its -1 and ascending is 1
+      sort[parts[0]] = parts[1] === 'desc' ? -1 : 1;
+    }
+  
+  try {
+    await req.user.populate({
+      path: 'tasks',
+      match: match,
+      options: {
+        // limiting how many task should show as search result
+        limit: parseInt(req.query.limit),
+        // skipping specific number of tasks and show the next ones
+        skip: parseInt(req.query.skip),
+        // sorting
+        sort: sort
+      }
+    }).execPopulate();
+    res.send(req.user.tasks);
   } catch(error) {
     res.status(500).send(error);
   }

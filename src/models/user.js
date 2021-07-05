@@ -50,6 +50,8 @@ const userSchema = new mongoose.Schema({
       required: true
     }
   }]
+}, {
+  timestamps: true
 });
 
 // adding a virtual method

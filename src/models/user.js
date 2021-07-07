@@ -49,7 +49,10 @@ const userSchema = new mongoose.Schema({
       type: String,
       required: true
     }
-  }]
+  }],
+  avatar: {
+    type: Buffer // keeps binary data for user's image
+  }
 }, {
   timestamps: true
 });
@@ -86,6 +89,7 @@ userSchema.methods.toJSON = function() {
   const userObject = user.toObject();  // mongodb's built in method toObject(), returns an object only properties that are added by the user, not the ones that mongodb adds
   delete userObject.password; // removing password from userObject
   delete userObject.tokens; // removing tokens array from userObject
+  delete userObject.avatar; // removing profile photo form userObject
   return userObject;
 }
 

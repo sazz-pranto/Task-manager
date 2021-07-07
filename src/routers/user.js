@@ -1,9 +1,26 @@
 const express = require('express');
+const multer = require('multer');
+const sharp = require('sharp'); // module for resizing images
 
 const User = require('../models/user');
 const auth = require('../middlewares/auth');
 
 const router = express.Router();
+
+// destination folder for image upload
+const upload = multer({
+  limits: {
+    fileSize: 1000000, // maximum filesize in bytes
+  },
+  fileFilter(req, file, cb) {
+    // if file is not jpg, jpeg or png, throw error
+    if(!file.originalname.toLowerCase().match(/\.(jpg|jpeg|png)$/)) {
+      return cb(new Error('Only jpg, jpeg or png files are supported!'));
+    }
+    // if filetype is allowed, accept the file with error set to null and true for the file
+    cb(null, true);
+  }
+});
 
 // creating a user
 router.post('/users', async (req, res) => {
@@ -26,7 +43,7 @@ router.get('/users/me', auth, async (req, res) => {
 
 })
 
-// update a user by id
+// update a user profile
 router.patch('/users/me', auth, async (req, res) => {
   // check if requested updates are allowed
   const requestedUpdates = Object.keys(req.body); // returns the properties of the user object entered as an update field as an array
@@ -71,6 +88,41 @@ router.delete('/users/me', auth, async (req, res) => {
     res.send(req.user);
   } catch(error) {
     res.status(500).send(error);
+  }
+})
+
+// upload user's profile photo
+router.post('/users/me/avatar', auth, upload.single('avatar'), async (req, res) => {
+  const buffer = await sharp(req.file.buffer).resize({ width: 250, height: 250 }).png().toBuffer();  // req.file.buffer has the binary data for user's image
+  req.user.avatar = buffer;  // buffer contains the buffer for the image after resizing and changing to png using sharp
+  await req.user.save();
+  res.status(200).send('Image uploaded');
+}, (error, req, res, next) => { // this callback runs when upload.single() middleware throws an error
+  res.status(400).send({ error: error.message });
+})
+
+// delete a user's avatar
+router.delete('/users/me/avatar', auth, async (req, res) => {
+    req.user.avatar = undefined;
+    await req.user.save();
+    res.status(200).send('Image deleted!');
+})
+
+// get user's avatar rendered in the browser
+router.get('/users/:id/avatar', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+
+    // if there's no user or user does not have an image to show, throw an error
+    if(!user || !user.avatar) {
+      throw new Error();
+    }
+
+    // set response header to render the image
+    res.set('Content-Type', 'image/png');
+    res.send(user.avatar); // sending the image data to the browser
+  } catch(err) {
+    res.status(400).send();
   }
 })
 

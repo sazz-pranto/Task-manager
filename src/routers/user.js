@@ -7,7 +7,7 @@ const auth = require('../middlewares/auth');
 
 const router = express.Router();
 
-// destination folder for image upload
+// multer configuration for image upload
 const upload = multer({
   limits: {
     fileSize: 1000000, // maximum filesize in bytes

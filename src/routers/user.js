@@ -25,7 +25,6 @@ const upload = multer({
 
 // creating a user
 router.post('/users', async (req, res) => {
-  let message;
   const user = new User(req.body);
   try {
     await user.save();
@@ -33,7 +32,7 @@ router.post('/users', async (req, res) => {
     // once the user is saved to the database, generate an auth token so that the user automatically gets logged in
     const token = await user.generateAuthToken();
 
-    res.status(201).send({ user, token, message });
+    res.status(201).send({ user, token });
   } catch(error) {
     res.status(400).send(error)
   }

@@ -4,10 +4,11 @@ const sharp = require('sharp'); // module for resizing images
 
 const User = require('../models/user');
 const auth = require('../middlewares/auth');
+const { sendWelcomeEmail, sendCancellationEmail } = require('../emails/account');
 
 const router = express.Router();
 
-// multer configuration for image upload
+// multer configuration for image upload  
 const upload = multer({
   limits: {
     fileSize: 1000000, // maximum filesize in bytes
@@ -24,14 +25,15 @@ const upload = multer({
 
 // creating a user
 router.post('/users', async (req, res) => {
+  let message;
   const user = new User(req.body);
   try {
     await user.save();
-
+    sendWelcomeEmail(user.email, user.name); // sending a welcome email after saving the user's data
     // once the user is saved to the database, generate an auth token so that the user automatically gets logged in
     const token = await user.generateAuthToken();
 
-    res.status(201).send({ user, token });
+    res.status(201).send({ user, token, message });
   } catch(error) {
     res.status(400).send(error)
   }
@@ -85,6 +87,7 @@ router.delete('/users/me', auth, async (req, res) => {
   try {
     // const user = await User.findByIdAndDelete(req.user._id);  // user object was attached to req object in auth middleware
     await req.user.remove();  // does the same thing as findByIdAndDelete()
+    sendCancellationEmail(req.user.email, req.user.name); // send an email on profile cancellation
     res.send(req.user);
   } catch(error) {
     res.status(500).send(error);

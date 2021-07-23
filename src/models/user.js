@@ -72,7 +72,7 @@ userSchema.methods.generateAuthToken = async function() {
   const user = this;  // refers to the specific user for which the token is being generated
 
   // setting up a token for the user with its id and signing it
-  const token = jwt.sign({ id: user._id.toString() }, 'secretxD'); // id should be converted to string cause its an ObjectId by default
+  const token = jwt.sign({ id: user._id.toString() }, process.env.JWT_SECRET); // id should be converted to string cause its an ObjectId by default
   
   // concat the newly created token to the user's properties
   user.tokens = user.tokens.concat({ token: token });

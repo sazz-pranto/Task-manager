@@ -38,6 +38,10 @@ router.post('/users', async (req, res) => {
   }
 })
 
+router.get('/', (req, res) => {
+  res.send('Hello!');
+})
+
 // read currently logged in user
 router.get('/users/me', auth, async (req, res) => {
   res.send(req.user);  // the user that is logged in was assigned to req object in auth middleware
